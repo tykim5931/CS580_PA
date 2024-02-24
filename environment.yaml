@@ -1,0 +1,41 @@
+name: cs580-rt
+channels:
+  - defaults
+dependencies:
+  - bzip2=1.0.8
+  - ca-certificates=2023.12.12
+  - libffi=3.4.4
+  - ncurses=6.4
+  - openssl=3.0.13
+  - pip=23.3.1
+  - python=3.10.13
+  - readline=8.2
+  - setuptools=68.2.2
+  - sqlite=3.41.2
+  - tk=8.6.12
+  - tzdata=2023d
+  - wheel=0.41.2
+  - xz=5.4.5
+  - zlib=1.2.13
+  - pip:
+      - black==24.2.0
+      - click==8.1.7
+      - docstring-parser==0.15
+      - jaxtyping==0.2.25
+      - markdown-it-py==3.0.0
+      - mdurl==0.1.2
+      - mypy-extensions==1.0.0
+      - numpy==1.26.4
+      - packaging==23.2
+      - pathspec==0.12.1
+      - pillow==10.2.0
+      - platformdirs==4.2.0
+      - progressbar==2.5
+      - pygments==2.17.2
+      - rich==13.7.0
+      - shtab==1.6.5
+      - tomli==2.0.1
+      - typeguard==2.13.3
+      - typing-extensions==4.9.0
+      - tyro==0.7.2
+prefix: /Users/seungwoo/miniconda3/envs/cs580-rt
