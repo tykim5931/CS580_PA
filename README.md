@@ -53,7 +53,7 @@ cd CS580-Assignment
 ```
 git remote rename origin sourcerepo
 git remote add origin {URL of your private repository}
-git push -u origin master
+git push -u origin main
 ```
 3. Create `conda` environment containing all necessary packages and activate the environment.
 ```
