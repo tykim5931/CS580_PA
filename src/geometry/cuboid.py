@@ -115,7 +115,43 @@ class Cuboid_Collider(Collider):
           the ray distance to the intersection point (row 0)
           and the orientation of the intersection point (row 1).
         """
-        raise NotImplementedError("TODO")
+        # raise NotImplementedError("TODO")
+        O_local_basis = O.matmul(self.basis_matrix)
+        D_local_basis = D.matmul(self.basis_matrix)
+
+        dirfrac = 1.0 / D_local_basis
+        
+        x0 = (self.lb_local_basis.x - O_local_basis.x)*dirfrac.x
+        x1 = (self.rt_local_basis.x - O_local_basis.x)*dirfrac.x
+        xmin, xmax = (x0, x1) if x0<x1 else (x1, x0)
+        y0 = (self.lb_local_basis.y - O_local_basis.y)*dirfrac.y
+        y1 = (self.rt_local_basis.y - O_local_basis.y)*dirfrac.y
+        ymin, ymax = (y0, y1) if y0<y1 else (y1, y0)
+        z0 = (self.lb_local_basis.z - O_local_basis.z)*dirfrac.z
+        z1 = (self.rt_local_basis.z - O_local_basis.z)*dirfrac.z
+        zmin, zmax = (z0, z1) if z0<z1 else (z1, z0)
+        
+        tmin = np.max([xmin, ymin, zmin])
+        tmax = np.min([xmax, ymax, zmax])
+        
+        # cuboid should be conditioned with not-intersect situation first
+        # tmin > tmax -> not-intersect.
+        # tmax < 0 -> behind origin
+        # tmin <0, tmax > 0 -> tmax is intersection.
+        hit = tmax if (tmin < 0) else tmin
+
+        pred1 = (tmin > tmax) | (tmax < 0) #no intersection
+        pred2 = tmin >= 0 #tmin
+        pred3 = True #tmax
+        
+        return np.select(
+            [pred1, pred2, pred3],
+            [
+                FARAWAY,
+                [hit, np.tile(UPWARDS, hit.shape)],
+                [hit, np.tile(UPDOWN, hit.shape)],
+            ],
+        )
 
     def get_Normal(self, hit):
 

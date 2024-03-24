@@ -34,7 +34,42 @@ class Sphere_Collider(Collider):
           the ray distance to the intersection point (row 0)
           and the orientation of the intersection point (row 1).
         """
-        raise NotImplementedError("TODO")
+        # raise NotImplementedError("TODO")
+        
+        # R(t) = O +tD , (P-C)^2 - r^2 = 0
+        # t^2 (D⋅D)+2t(D⋅(O−C))+(O−C)⋅(O−C)−r^2 =0
+        # t = -b +- sqrt(discriminat) / 2a
+        a = D.dot(D)
+        O_C = O-self.center
+        b = 2*D.dot(O_C)
+        c = (O_C).dot(O_C) - self.radius**2
+        discriminant = b**2 - 4*a*c
+        
+        # if disc < 0, ray does not intersect
+        # if disc > 0, intersect with 2
+        # if disc = 0, ray meets sphere 1
+        # let disc > 0.
+        hp = (-b + np.sqrt(np.abs(discriminant))) / (2*a)
+        hn = (-b - np.sqrt(np.abs(discriminant))) / (2*a)
+        h = hn if (hn>0) & (hn<hp) else hp
+        M = O + D*h
+        NdotD = ((M-self.center)*1.0 /self.radius).dot(D)
+        
+        hit = (discriminant > 0) & (h>0)
+        hit_UPWARDS = NdotD < 0
+        hit_UPDOWN = np.logical_not(hit_UPWARDS)
+
+        pred1 = hit & hit_UPWARDS
+        pred2 = hit & hit_UPDOWN
+        pred3 = True
+        return np.select(
+            [pred1, pred2, pred3],
+            [
+                [h, np.tile(UPWARDS, h.shape)],
+                [h, np.tile(UPDOWN, h.shape)],
+                FARAWAY,
+            ],
+        )
 
     def get_Normal(self, hit):
         # M = intersection point

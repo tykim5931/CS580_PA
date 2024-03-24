@@ -73,7 +73,38 @@ class Plane_Collider(Collider):
           the ray distance to the intersection point (row 0)
           and the orientation of the intersection point (row 1).
         """
-        raise NotImplementedError("TODO")
+        # raise NotImplementedError("TODO")
+        N = self.normal
+
+        NdotD = N.dot(D)
+        NdotD = np.where(NdotD == 0.0, NdotD + 0.0001, NdotD)  # avoid zero division
+
+        NdotC_O = N.dot(self.center - O)
+        d = D * NdotC_O / NdotD
+        M = O + d  # intersection point
+        dis = d.length()
+        M_C = M - self.center
+        
+        # plane collider => intersection point is inside plane boundary & frontal way
+        hit_inside = (
+            (self.u_axis.dot(M_C) <= self.w)
+            & (self.v_axis.dot(M_C) <= self.h)
+            & (NdotC_O * NdotD > 0)
+        )
+        hit_UPWARDS = NdotD < 0
+        hit_UPDOWN = np.logical_not(hit_UPWARDS)
+
+        pred1 = hit_inside & hit_UPWARDS
+        pred2 = hit_inside & hit_UPDOWN
+        pred3 = True
+        return np.select(
+            [pred1, pred2, pred3],
+            [
+                [dis, np.tile(UPWARDS, dis.shape)],
+                [dis, np.tile(UPDOWN, dis.shape)],
+                FARAWAY,
+            ],
+        )
 
     def rotate(self, M, center):
         self.u_axis = self.u_axis.matmul(M)
