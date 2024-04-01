@@ -115,7 +115,49 @@ class Cuboid_Collider(Collider):
           the ray distance to the intersection point (row 0)
           and the orientation of the intersection point (row 1).
         """
-        raise NotImplementedError("TODO")
+        # raise NotImplementedError("TODO")
+        # box is intersection of 3 slabs (pair of parallel planes)
+        # ray is clipped by parallel planes & if any portion of the ray remains,
+        # it intersected the box.
+        
+        # prepare ray & plane aligned to local basis
+        O_local_basis = O.matmul(self.basis_matrix)
+        D_local_basis = D.matmul(self.basis_matrix)
+        
+        # intersection: t = (p - o) / d
+        tlow = (self.lb_local_basis - O_local_basis) / D_local_basis
+        thigh = (self.rt_local_basis - O_local_basis) / D_local_basis
+        
+        # select minmax, since low boundary isn't just closer
+        xmin = np.where(tlow.x <= thigh.x, tlow.x, thigh.x)
+        xmax = np.where(tlow.x >= thigh.x, tlow.x, thigh.x)
+        ymin = np.where(tlow.y <= thigh.y, tlow.y, thigh.y)
+        ymax = np.where(tlow.y >= thigh.y, tlow.y, thigh.y)
+        zmin = np.where(tlow.z <= thigh.z, tlow.z, thigh.z)
+        zmax = np.where(tlow.z >= thigh.z, tlow.z, thigh.z)
+        
+        # get maximum of minimum, minimum of maximum.
+        tmin = np.maximum(np.maximum(xmin, ymin), zmin)
+        tmax = np.minimum(np.minimum(xmax, ymax), zmax)
+        
+        # cuboid should be conditioned with not-intersect situation first
+        # tmin > tmax -> not-intersect.
+        # tmax < 0 -> behind origin
+        # tmin <0, tmax > 0 -> tmax is intersection.
+        hit = np.where(tmin < 0, tmax, tmin) # intersection point 
+
+        pred1 = (tmin > tmax) | (tmax < 0) #no intersection
+        pred2 = tmin >= 0 #tmin
+        pred3 = True #tmax
+        
+        return np.select(
+            [pred1, pred2, pred3],
+            [
+                FARAWAY,
+                [hit, np.tile(UPWARDS, hit.shape)],
+                [hit, np.tile(UPDOWN, hit.shape)],
+            ],
+        )
 
     def get_Normal(self, hit):
 
