@@ -44,9 +44,12 @@ class Camera:
         # we are going to cast a total of screen_width * screen_height * samples_per_pixel rays
         # xx,yy store the origin of each ray in a 3d array where the first and second dimension are the x,y coordinates of each pixel
         # and the third dimension is the sample index of each pixel
-        xx, yy = np.meshgrid(self.x, self.y)
-        self.x = xx.flatten()
-        self.y = yy.flatten()
+        xx, yy = np.meshgrid(self.x, self.y)    # 300, 400
+        self.x = xx.flatten()   # 120000,
+        self.y = yy.flatten()   # 120000,
+        
+        print(xx.shape)
+        print(yy.shape)
 
     def get_ray(self, n: vec3) -> Ray:
         """
@@ -59,10 +62,22 @@ class Camera:
         Returns:
         - A Ray object containing the origin, direction, and other information of the rays.
         """
-        raise NotImplementedError("TODO")
+        # raise NotImplementedError("TODO")
+        # ray origin per pixel
+        rx, ry = random_in_unit_disk(self.x.shape[0])
+        dx = self.cameraRight * rx * self.lens_radius
+        dy = self.cameraUp * ry * self.lens_radius
+        ray_origin = self.look_from + dx + dy
+        
+        x_perturb = self.x + (np.random.rand(self.x.shape[0]) - 0.5) * self.camera_width / self.screen_width
+        y_perturb = self.y + (np.random.rand(self.y.shape[0]) - 0.5) * self.camera_height / self.screen_height
+        
+        dx_pixel = self.cameraRight * x_perturb * self.focal_distance
+        dy_pixel = self.cameraUp * y_perturb * self.focal_distance
+        dz_pixel = self.cameraFwd * self.focal_distance
+        
+        ray_dir = (self.look_from + dx_pixel + dy_pixel + dz_pixel - ray_origin).normalize()
 
-        ray_origin = None
-        ray_dir = None
         return Ray(
             origin=ray_origin,
             dir=ray_dir,
