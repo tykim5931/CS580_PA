@@ -44,12 +44,9 @@ class Camera:
         # we are going to cast a total of screen_width * screen_height * samples_per_pixel rays
         # xx,yy store the origin of each ray in a 3d array where the first and second dimension are the x,y coordinates of each pixel
         # and the third dimension is the sample index of each pixel
-        xx, yy = np.meshgrid(self.x, self.y)    # 300, 400
-        self.x = xx.flatten()   # 120000,
-        self.y = yy.flatten()   # 120000,
-        
-        print(xx.shape)
-        print(yy.shape)
+        xx, yy = np.meshgrid(self.x, self.y)
+        self.x = xx.flatten()
+        self.y = yy.flatten()
 
     def get_ray(self, n: vec3) -> Ray:
         """
