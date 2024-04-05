@@ -81,9 +81,40 @@ def get_raycolor(ray, scene) -> vec3:
     # ray: dir, n, origin, reflections, transmissions
     # scene:light_list ambient_color, camera, collider_list, importance_sampled list(empty), n, scene_primitives, shadowed_collider_list
 
-    # 1. get ray - object collision
-    intersections = list(collider.intersect(ray.origin, ray.dir) for collider in scene.collider_list) # [[d*n_rays, o*n_rays]]
-    return None
+    # performing a ray-object intersection check 
+    # and initiating recursive ray tracing for reflection and refraction, 
+    # depending on the material characteristic of the surface.
+
+    distances = []
+    orientations = []
+    for collider in scene.collider_list:
+        d, o = collider.intersect(ray.origin, ray.dir)
+        distances.append(d)
+        orientations.append(o)
+    
+    # find first object ray is intersecting
+    nearest = reduce(np.minimum, distances)
+    # n_c = len(scene.collider_list)
+    # for i in range(n_c):
+    #     hit_mask = (distances[i]==nearest) & (nearest!=FARAWAY)
+    #     hit_d = extract(hit_mask, distances[i])
+    #     hit_o = extract(hit_mask, orientations[i])
+    #     distances[i] = hit_d
+    #     orientations[i] = hit_o
+    
+    # initiate color to accumulate
+    color = rgb(0., 0., 0.)
+
+    for (d, o, c) in zip(distances, orientations, scene.collider_list):
+        hit_mask = (d==nearest) & (nearest!=FARAWAY)
+        
+        first_hit = Hit(extract(hit_mask,d), extract(hit_mask,o), c.assigned_primitive.material, c, c.assigned_primitive)
+        
+        # let metarial get_color called recursively
+        cumulated_color = c.assigned_primitive.material.get_color(scene, ray.extract(hit_mask), first_hit)
+        color += cumulated_color.place(hit_mask)
+        
+    return color
 
 def get_distances(
     ray, scene
