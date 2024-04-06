@@ -91,12 +91,11 @@ class Glossy(Material):
                 # G: fraction of microfacets which are neither occluded or shadowed
                 # number from 0 to 1 which indicates the proportion of light that is not blocked by either of these effects
                 G = np.minimum(1., np.minimum(2.*N_dot_H*N_dot_V/V_dot_H, 2.*N_dot_H*NdotL/V_dot_H))
-                
                 # F: Fresnel: Schlick's Approximation
-                F0 = ((self.n - ray.n)/(self.n + ray.n))**2
+                F0 = np.abs((self.n - ray.n)/(self.n + ray.n))**2
                 F = F0 + (1. - F0) * (1.- V_dot_H)**5
                 
-                color_rs = self.spec_coeff * (F * D_blinn * G) / (4 * NdotL * N_dot_V)
+                color_rs = self.spec_coeff * F * D_blinn * G / (4. * np.clip(N.dot(V) * NdotL, 0.001, 1.))
                 color += color_rs * lv * seelight
 
         # Reflection
@@ -108,14 +107,14 @@ class Glossy(Material):
             # Fresnel Reflection (Schlick’s approximation)
             # theta: angle between the direction from which the incident light is coming & normal of the interface between two media -> NdotV
             # n1, n2 indices of refraction of the two media. (here, air & surface)
-            F0 = ((scene.n - self.n)/(scene.n  + self.n))**2
+            F0 = np.abs((scene.n - self.n)/(scene.n  + self.n))**2
             N_dot_V = np.clip(N.dot(V), 0.0, 1.)
             F = F0 + (1. - F0) * (1.- N_dot_V)**5
             
             # Get color of reflected ray
             reflected_ray = Ray(
-                hit.point + N * 0.000001,  # M nudged to avoid itself
-                (ray.dir - N*2.*ray.dir.dot(N)).normalize(),
+                nudged,  # M nudged to avoid itself
+                (ray.dir - N * 2. * ray.dir.dot(N)).normalize(),
                 ray.depth + 1,
                 ray.n,
                 ray.reflections + 1,

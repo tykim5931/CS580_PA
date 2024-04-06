@@ -9,7 +9,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "main.py",
-      "args": ["--scene-type", "scene0"],
+      "args": ["--scene-type", "scene1-glossy"],
       "console": "integratedTerminal"
     }
   ]
