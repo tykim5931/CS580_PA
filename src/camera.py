@@ -60,7 +60,6 @@ class Camera:
         - A Ray object containing the origin, direction, and other information of the rays.
         """
         # raise NotImplementedError("TODO")
-        # ray origin per pixel
         rx, ry = random_in_unit_disk(self.x.shape[0])
         dx = self.cameraRight * rx * self.lens_radius
         dy = self.cameraUp * ry * self.lens_radius
