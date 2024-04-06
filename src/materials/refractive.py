@@ -55,7 +55,7 @@ class Refractive(Material):
 
             # TODO: Compute complete fresnel term
             F = None  # the computed fresnel term
-
+            
             # TODO: Add the contribution of the reflected ray
             # color += ...  # the color of the reflected ray
 

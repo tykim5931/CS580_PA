@@ -46,26 +46,14 @@ class Diffuse(Material):
         # we generate multiple secondary rays to solve the rendering equation.
         if ray.diffuse_reflections < 1:
             # raise NotImplementedError("TODO")
-            # nudged = hit.point + N * 0.000001  # M nudged to avoid itself
-
+            num_hit_ray = N.shape()[0]
+            nudged = hit.point + N * 0.000001  # M nudged to avoid itself
             N_20 = N.repeat(self.diffuse_rays)
-            hit_20 = hit.point.repeat(self.diffuse_rays)
-            nudged_20 = hit_20 + N_20 * .000001
-            ray_n_20 = ray.n.repeat(self.diffuse_rays)
+            nudged_20 = nudged.repeat(self.diffuse_rays)
             
-            pdf = cosine_pdf(nudged_20.shape()[0], N_20)
+            pdf = cosine_pdf(num_hit_ray*self.diffuse_rays, N_20)
             reflected_rays_dir = pdf.generate()
             pdf_val = pdf.value(reflected_rays_dir)
-            
-            
-            # pdf2 = spherical_caps_pdf(nudged_20.shape()[0], nudged_20, scene.importance_sampled_list)
-            # s_pdf = None
-            # if scene.importance_sampled_list == []:
-            #     s_pdf = pdf
-            # else:
-            #     s_pdf = mixed_pdf(nudged_20.shape()[0], pdf, pdf2, self.ambient_weight)
-            # reflected_rays_dir = s_pdf.generate()
-            # pdf_val = s_pdf.value(reflected_rays_dir)
             
             reflected_ray = Ray(
                 nudged_20,
@@ -79,7 +67,7 @@ class Diffuse(Material):
             N_dot_L = np.clip(reflected_rays_dir.dot(N_20), 0., 1.)
             
             c = get_raycolor(reflected_ray, scene)/pdf_val * N_dot_L
-            mean_c_sample = c.reshape(N.shape()[0], self.diffuse_rays).mean(1)
+            mean_c_sample = c.reshape(num_hit_ray, self.diffuse_rays).mean(1)
             color += diff_color / np.pi * mean_c_sample
             return color
             
@@ -92,17 +80,6 @@ class Diffuse(Material):
             pdf = cosine_pdf(nudged.shape()[0], N)
             reflected_rays_dir = pdf.generate()
             pdf_val = pdf.value(reflected_rays_dir)
-            
-            
-            # pdf2 = spherical_caps_pdf(nudged.shape()[0], nudged, scene.importance_sampled_list)
-            # s_pdf = None
-            # if scene.importance_sampled_list == []:
-            #     s_pdf = pdf
-            # else:
-            #     s_pdf = mixed_pdf(nudged.shape()[0], pdf, pdf2, self.ambient_weight)
-            # reflected_rays_dir = s_pdf.generate()
-            # pdf_val = s_pdf.value(reflected_rays_dir)
-            
             
             reflected_ray = Ray(
                 nudged,
