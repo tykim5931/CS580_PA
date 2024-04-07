@@ -50,6 +50,7 @@ class Diffuse(Material):
             nudged = hit.point + N * 0.000001  # M nudged to avoid itself
             N_20 = N.repeat(self.diffuse_rays)
             nudged_20 = nudged.repeat(self.diffuse_rays)
+            ray_n = ray.n if ray.n.shape() == 1 else ray.n.repeat(self.diffuse_rays)
             
             pdf = cosine_pdf(num_hit_ray*self.diffuse_rays, N_20)
             reflected_rays_dir = pdf.generate()
@@ -59,16 +60,16 @@ class Diffuse(Material):
                 nudged_20,
                 reflected_rays_dir,
                 ray.depth + 1,
-                ray.n,
+                ray_n,
                 ray.reflections + 1,
                 ray.transmissions,
                 ray.diffuse_reflections + 1
             )
             N_dot_L = np.clip(reflected_rays_dir.dot(N_20), 0., 1.)
             
-            c = get_raycolor(reflected_ray, scene)/pdf_val * N_dot_L
+            c = get_raycolor(reflected_ray, scene)/pdf_val * N_dot_L / np.pi
             mean_c_sample = c.reshape(num_hit_ray, self.diffuse_rays).mean(1)
-            color += diff_color / np.pi * mean_c_sample
+            color += diff_color * mean_c_sample
             return color
             
         # TODO: If the ray intersected with diffuse material more than once,
@@ -90,10 +91,10 @@ class Diffuse(Material):
                 ray.transmissions,
                 ray.diffuse_reflections + 1
             )
-            N_dot_L = np.clip(reflected_rays_dir.dot(N), 0, 1)
+            N_dot_L = np.clip(reflected_rays_dir.dot(N), 0., 1.)
             
-            c = get_raycolor(reflected_ray, scene)/pdf_val * N_dot_L
-            color += diff_color / np.pi * c
+            c = get_raycolor(reflected_ray, scene)/pdf_val * N_dot_L / np.pi
+            color += diff_color * c
             return color
             
         # TODO: Stop tracing if the recursion depth exceeds the maximum depth.
