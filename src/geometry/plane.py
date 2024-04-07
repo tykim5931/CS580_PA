@@ -86,9 +86,10 @@ class Plane_Collider(Collider):
         M_C = M - self.center
         
         # plane collider => intersection point is inside plane boundary & frontal way
+        # should be absolute, since if negative, it will be always count to be hitted!!! > cornell box problem
         hit_inside = (
-            (self.u_axis.dot(M_C) <= self.w)
-            & (self.v_axis.dot(M_C) <= self.h)
+            (np.abs(self.u_axis.dot(M_C)) <= self.w)
+            & (np.abs(self.v_axis.dot(M_C)) <= self.h)
             & (NdotC_O * NdotD > 0)
         )
         hit_UPWARDS = NdotD < 0

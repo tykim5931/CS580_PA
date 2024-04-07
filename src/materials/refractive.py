@@ -62,10 +62,10 @@ class Refractive(Material):
             # # TODO: Add the contribution of the reflected ray
             # # color += ...  # the color of the reflected ray
             # r = i+ 2 * cosθi * n
-            r_dir = (ray.dir + N * 2. * cosθi).normalize()
+            reflected_dir = (ray.dir + N * 2. * cosθi).normalize()
             reflected_ray = Ray(
                 nudged,
-                r_dir,
+                reflected_dir,
                 ray.depth + 1,
                 n1,
                 ray.reflections + 1,
@@ -76,32 +76,28 @@ class Refractive(Material):
 
             # # TODO: Compute refraction
             # # color += ... # the color of the refracted ray
-            cond = sin2θt.average()<=1
+            # for computation exeleration,compress vec3
+            _sin2θt = sin2θt.x
+            _n1_div_n2 = n1_div_n2.x
+
+            cond = _sin2θt<=1
             if np.any(cond):
-                # we have candidate to sum up as refraction.
+                # if we have candidate within condition to sum up as refraction.
                 nudged = hit.point - N * 0.000001  # M nudged to avoid itself
-                t_dir = (
-                    ray.dir * n1_div_n2 +  N * (
-                        n1_div_n2 * cosθi - np.sqrt(1-sin2θt.clip(0.,1.))
-                    )
-                ).normalize()   # we use only real part for refraction direction
+                transmittance_dir = (ray.dir * _n1_div_n2 +  N * (_n1_div_n2 * cosθi - np.sqrt(1-np.clip(_sin2θt, 0.,1.)))).normalize()   # we use only real part for refraction direction
                 refracted_ray = Ray(
                     nudged,
-                    t_dir,
+                    transmittance_dir,
                     ray.depth + 1,
                     n2,
                     ray.reflections,
                     ray.transmissions + 1,
                     ray.diffuse_reflections
                 )
-                T = (1. - F)
-                color += get_raycolor(refracted_ray, scene) * T
+                color += get_raycolor(refracted_ray, scene) * (1. - F)
 
             # # TODO: Compute absorption effect
-            extinction_coeff = vec3.imag(ray.n) # index of refraction.
-            absorption_coefficient = extinction_coeff * 4. * np.pi / vec3(630,550,475)
-            concentration = 1e9
-            color *= vec3.exp(-absorption_coefficient * concentration * hit.distance)  # the absorption effect
-            # color = color *vec3.exp(-2.*vec3.imag(ray.n)*2.*np.pi/vec3(630,550,475) * 1e9* hit.distance)
+            # exp(-absorption_coefficient(= 4 * pi * k / lambda) * concentration * travel distnace)
+            color *= vec3.exp(-4. * np.pi * vec3.imag(ray.n) * 1e9 * hit.distance / vec3(630,550,475))  # the absorption effect
         return color
 

@@ -77,25 +77,26 @@ class Glossy(Material):
                 # f_r(v,l) = fd + fs
                 # fd = lo_d / pi <- normalized phong BRDF (lambert shading (diffuse))
                 # fs = Frensel * normal distribution * geoemtry term / 4 n.dot(l) n.dot(v)
-                N_dot_H = np.clip(N.dot(H), 0.0, 1.)
-                V_dot_H = np.clip(V.dot(H), 0.0, 1.)
-                N_dot_V = np.clip(N.dot(V), 0.0, 1.)
+                NdotH = np.clip(N.dot(H), 0.0, 1.)
+                VdotH = np.clip(V.dot(H), 0.0, 1.)
+                NdotV = np.clip(N.dot(V), 0.0, 1.)
                 
+                # F: Fresnel: Schlick's Approximation
+                F0 = np.abs((ray.n-self.n)/(ray.n+self.n))**2
+                F = F0 + (1. - F0) * (1.- VdotH)**5
+
                 # D: normal distribution
                 power = 2./(self.roughness**2.) - 2.    # bling-phong
-                D_blinn = np.power(N_dot_H, power) * 1/(np.pi*self.roughness**2)
-                # D_ggx = self.roughness**2 / (np.pi * ((N_dot_H)**2 * (self.roughness**2-1.) + 1.)**2)
+                D_blinn = np.power(NdotH, power) /np.pi/self.roughness**2
+                # D_ggx = self.roughness**2 / (np.pi * ((NdotH)**2 * (self.roughness**2-1.) + 1.)**2)
     
                 # G: geometry term (schlick's approximation)
-                # G = N_dot_V / (N_dot_V * (1 - self.roughness / 2.) +self.roughness / 2.)
+                G = NdotV / (NdotV * (1 - self.roughness / 2.) + self.roughness / 2.)
                 # G: fraction of microfacets which are neither occluded or shadowed
                 # number from 0 to 1 which indicates the proportion of light that is not blocked by either of these effects
-                G = np.minimum(1., np.minimum(2.*N_dot_H*N_dot_V/V_dot_H, 2.*N_dot_H*NdotL/V_dot_H))
-                # F: Fresnel: Schlick's Approximation
-                F0 = np.abs((self.n - ray.n)/(self.n + ray.n))**2
-                F = F0 + (1. - F0) * (1.- V_dot_H)**5
+                # G = np.minimum(1., np.minimum(2.*NdotH*NdotV/VdotH, 2.*NdotH*NdotL/VdotH)
                 
-                color_rs = self.spec_coeff * F * D_blinn * G / (4. * np.clip(N.dot(V) * NdotL, 0.001, 1.))
+                color_rs = F * G * D_blinn * self.spec_coeff / 4. / np.clip(NdotV * NdotL, 0.001, 1.) # avoid zerodivision
                 color += color_rs * lv * seelight
 
         # Reflection
@@ -108,13 +109,15 @@ class Glossy(Material):
             # theta: angle between the direction from which the incident light is coming & normal of the interface between two media -> NdotV
             # n1, n2 indices of refraction of the two media. (here, air & surface)
             F0 = np.abs((scene.n - self.n)/(scene.n  + self.n))**2
-            N_dot_V = np.clip(N.dot(V), 0.0, 1.)
-            F = F0 + (1. - F0) * (1.- N_dot_V)**5
+            NdotV = np.clip(N.dot(V), 0.0, 1.)
+            F = F0 + (1. - F0) * (1.- NdotV)**5
             
             # Get color of reflected ray
+            # R_r = R_i -2H(R_i*N)
+            out_ray = (ray.dir - N * 2. * ray.dir.dot(N)).normalize()
             reflected_ray = Ray(
                 nudged,  # M nudged to avoid itself
-                (ray.dir - N * 2. * ray.dir.dot(N)).normalize(),
+                out_ray,
                 ray.depth + 1,
                 ray.n,
                 ray.reflections + 1,
