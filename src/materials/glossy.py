@@ -114,10 +114,10 @@ class Glossy(Material):
             
             # Get color of reflected ray
             # R_r = R_i -2H(R_i*N)
-            out_ray = (ray.dir - N * 2. * ray.dir.dot(N)).normalize()
+            out_dir = (ray.dir - N * 2. * ray.dir.dot(N)).normalize()
             reflected_ray = Ray(
                 nudged,  # M nudged to avoid itself
-                out_ray,
+                out_dir,
                 ray.depth + 1,
                 ray.n,
                 ray.reflections + 1,
