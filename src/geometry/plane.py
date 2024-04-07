@@ -74,6 +74,7 @@ class Plane_Collider(Collider):
           and the orientation of the intersection point (row 1).
         """
         # raise NotImplementedError("TODO")
+        # ===== this is from triangle ======
         N = self.normal
 
         NdotD = N.dot(D)
@@ -84,6 +85,7 @@ class Plane_Collider(Collider):
         M = O + d  # intersection point
         dis = d.length()
         M_C = M - self.center
+        # ===================================
         
         # plane collider => intersection point is inside plane boundary & frontal way
         # should be absolute, since if negative, it will be always count to be hitted!!! > cornell box problem

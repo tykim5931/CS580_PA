@@ -46,16 +46,17 @@ class Diffuse(Material):
         # we generate multiple secondary rays to solve the rendering equation.
         if ray.diffuse_reflections < 1:
             # raise NotImplementedError("TODO")
-            num_hit_ray = N.shape()[0]
             nudged = hit.point + N * 0.000001  # M nudged to avoid itself
 
+            # To parallelize for loop, make as repeated matrix (sample at once!!)
             nudged_20 = nudged.repeat(self.diffuse_rays)
             N_20 = N.repeat(self.diffuse_rays)
-            ray_n_20 = ray.n if ray.n.shape() == 1 else ray.n.repeat(self.diffuse_rays)
+            ray_n_20 = ray.n if ray.n.shape() == 1 else ray.n.repeat(self.diffuse_rays) # if no refraction we're okay but should be handled in case of diffuse
 
             pdf = cosine_pdf(N_20.shape()[0], N_20)
             reflected_rays_dir = pdf.generate() # already normalized
             pdf_val = pdf.value(reflected_rays_dir)
+            
             reflected_ray = Ray(
                 nudged_20,
                 reflected_rays_dir,
@@ -67,7 +68,7 @@ class Diffuse(Material):
             )
             N_dot_L_20 = np.clip(reflected_rays_dir.dot(N_20), 0., 1.)
             every_color = get_raycolor(reflected_ray, scene) * N_dot_L_20 / pdf_val
-            mean_c_sample = every_color.reshape(N.shape()[0], self.diffuse_rays).mean(1) / np.pi
+            mean_c_sample = every_color.reshape(N.shape()[0], self.diffuse_rays).mean(1)
 
             # color_temp = rgb(0.,0.,0.)
             # for i in range(self.diffuse_rays):
@@ -86,7 +87,7 @@ class Diffuse(Material):
             #     N_dot_L = np.clip(reflected_rays_dir.dot(N), 0., 1.)
             #     color_temp += get_raycolor(reflected_ray, scene) * N_dot_L / pdf_val
             # mean_c_sample = color_temp / self.diffuse_rays / np.pi
-            color += diff_color * mean_c_sample
+            color += diff_color * mean_c_sample / np.pi
 
             return color
             

@@ -54,10 +54,10 @@ class Refractive(Material):
             sin2θt = (n1_div_n2) ** 2 * (1.0 - cosθi**2)
 
             # TODO: Compute complete fresnel term
-            cosθt = vec3.sqrt(1. - n1/n2 ** 2 * (1.0 - cosθi**2)) # for reflection we need to include the imag term
+            cosθt = vec3.sqrt(1. - n1/n2 ** 2 * (1.0 - cosθi**2)) # for reflection we need to include the imaginary term
             rs = (n1*cosθi - n2*cosθt) / (n1*cosθi + n2*cosθt)
             rp = (n1*cosθt - n2*cosθi) / (n1*cosθt + n2*cosθi)
-            F = np.abs((rs**2 + rp**2) / 2.)
+            F = np.abs((rs**2 + rp**2) / 2.)    # approximate with no polar setting
             
             # # TODO: Add the contribution of the reflected ray
             # # color += ...  # the color of the reflected ray
@@ -76,15 +76,18 @@ class Refractive(Material):
 
             # # TODO: Compute refraction
             # # color += ... # the color of the refracted ray
+
             # for computation exeleration,compress vec3
             _sin2θt = sin2θt.x
             _n1_div_n2 = n1_div_n2.x
 
+            # viable condition for refraction is sin^2(theta) <= 1
             cond = _sin2θt<=1
             if np.any(cond):
                 # if we have candidate within condition to sum up as refraction.
                 nudged = hit.point - N * 0.000001  # M nudged to avoid itself
-                transmittance_dir = (ray.dir * _n1_div_n2 +  N * (_n1_div_n2 * cosθi - np.sqrt(1-np.clip(_sin2θt, 0.,1.)))).normalize()   # we use only real part for refraction direction
+                # we use only real part for refraction direction
+                transmittance_dir = (ray.dir * _n1_div_n2 +  N * (_n1_div_n2 * cosθi - np.sqrt(1-np.clip(_sin2θt, 0.,1.)))).normalize()
                 refracted_ray = Ray(
                     nudged,
                     transmittance_dir,

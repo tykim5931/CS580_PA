@@ -9,7 +9,7 @@
       "type": "debugpy",
       "request": "launch",
       "program": "main.py",
-      "args": ["--scene-type", "scene1-diffuse"],
+      "args": ["--scene-type", "cornell_box"],
       "console": "integratedTerminal"
     }
   ]

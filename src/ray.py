@@ -84,7 +84,6 @@ def get_raycolor(ray, scene) -> vec3:
     # performing a ray-object intersection check 
     # and initiating recursive ray tracing for reflection and refraction, 
     # depending on the material characteristic of the surface.
-
     intersections = [c.intersect(ray.origin, ray.dir) for c in scene.collider_list]
     distances, orientations = list(zip(*intersections))
     
@@ -96,7 +95,7 @@ def get_raycolor(ray, scene) -> vec3:
 
     # for all objects collided in scene
     for (d, o, c) in zip(distances, orientations, scene.collider_list):
-        # mask out rays that it actually collides & which is first collision
+        # mask to select rays that actually collides & which is first collision (non-first will be handeled by recursive hit...)
         hit_mask = (first_hit_distance!=FARAWAY) & (d==first_hit_distance)
         if not np.any(hit_mask):
             pass
